@@ -9,6 +9,35 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+const db = require("./app/models");
+const Role = db.role;
+
+/* 
+in dev: drop existing tables and re-sync db with force: true
+in prod: insert rows manually and use sync() without params to avoid dropping DataTransfer
+ */
+db.sequelize.sync({ force:true }).then(() => {
+    console.log('Drop and Resync Db');
+    initial();
+});
+
+function initial(){
+    Role.create({
+        id: 1,
+        name: "User"
+    });
+
+    Role.create({
+        id: 2,
+        name: "moderator"
+    });
+
+    Role.create({
+        id: 3,
+        name: "admin"
+    });
+}
+
 // parse requests of content-type - application/json
 app.use(express.json());
 
@@ -19,6 +48,10 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/', (req, res) => {
     res.json({ message: "Welcome to the Galactic Republic"});
 });
+
+// routes
+require('./app/routes/auth.routes')(app)
+require('./app/routes/user.routes')(app)
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
